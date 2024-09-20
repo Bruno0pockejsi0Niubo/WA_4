@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Měsíční přehled nápojů</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        .form-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        #summary {
+            margin-top: 20px;
+        }
+
+        #summary table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #summary th, #summary td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        #summary th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Zadejte měsíc pro přehled nápojů</h2>
+    <div class="form-group">
+        <label for="month">Číslo měsíce:</label>
+        <input type="number" id="month" min="1" max="12" placeholder="Např. 9 pro září">
+    </div>
+    <button id="showSummary">Zobrazit přehled</button>
+    <div id="summary"></div>
+</div>
+
+<script>
+    document.getElementById("showSummary").addEventListener("click", function () {
+        const month = document.getElementById("month").value;
+        if (month < 1 || month > 12) {
+            alert("Zadejte platné číslo měsíce (1-12)");
+            return;
+        }
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", `http://ajax1.lmsoft.cz/procedure.php?cmd=getSummaryOfDrinks&month=${month}`, true);
+
+        // Nastavíme hlavičku pro základní autentizaci (uživatel coffe, heslo kafe)
+        xhr.setRequestHeader("Authorization", "Basic " + btoa("coffe:kafe"));
+
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                try {
+                    const drinks = JSON.parse(xhr.responseText);
+
+                    if (Array.isArray(drinks)) {
+                        let output = "<table>";
+                        output += "<tr><th>Nápoj</th><th>Množství (ml)</th><th>Jméno</th></tr>";
+                        drinks.forEach(function (drink) {
+                            output += `<tr><td>${drink[0]}</td><td>${drink[1]}</td><td>${drink[2]}</td></tr>`;
+                        });
+                        output += "</table>";
+                        document.getElementById("summary").innerHTML = output;
+                    } else {
+                        document.getElementById("summary").innerHTML = "<p>Nebyly nalezeny žádné záznamy pro zadaný měsíc.</p>";
+                    }
+                } catch (error) {
+                    document.getElementById("summary").innerHTML = `<p>Chyba při zpracování dat: ${error.message}</p>`;
+                }
+            } else {
+                document.getElementById("summary").innerHTML = `<p>Došlo k chybě při načítání dat. Status: ${xhr.status}</p>`;
+            }
+        };
+
+        xhr.send();
+    });
+</script>
+
+</body>
+</html>
